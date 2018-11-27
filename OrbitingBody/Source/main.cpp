@@ -1,6 +1,44 @@
 #include "draw.h"
 #include "laws.h"
 #include "collisions.h"
+#include "matrix.h"
+
+template<unsigned dim>
+using vec = matrix<1, dim>;
+
+void runTests()
+{
+	int res = 0;
+	vec<2> xy1{ 1.f, 2.f }, xy2{ 3.f,4.f };
+	vec<3> xyz1{ 5.f, 6.f, 7.f }, xyz2{ 8.f, 9.f, 10.f };
+
+	printf("xy1 = ");
+	print(xy1);
+	printf("xy2 = ");
+	print(xy2);
+
+	printf("2 * xy1 = ");
+	print(2.f * xy1);
+
+	printf("xy1 + xy2 = ");
+	print(xy1 + xy2);
+	
+	float dot = xy1.dotProduct(xy2);
+	printf("xy1 dot xy2 = %f\n", dot);
+
+	printf("\n");
+
+	printf("xyz1 = ");
+	print(xyz1);
+	printf("xyz2 = ");
+	print(xyz2);
+
+	vec<3> cross = xyz1.crossProduct(xyz2);
+	printf("xyz1 cross xyz2 =");
+	print(cross);
+
+	printf("\n");
+}
 
 template <typename T>
 int sgn(T val)
@@ -64,6 +102,8 @@ float dist(object* ball1, object* ball2)
 
 int main(void)
 {
+	runTests();
+
 	GLFWwindow* window;
 
 	/* Initialize the library */
