@@ -2,19 +2,22 @@
 
 typedef unsigned int uint;
 
+
 #include <GLFW/glfw3.h>
 #include <cmath>
 #include <cstdio>
 
-//matrix
-#include <initializer_list>
-#include <stdexcept>
+#include "matrix.h"
+
+template<unsigned dim>
+using vec = matrix<dim, 1>;
 
 typedef struct object_s {
-	float x, y;
-	float xp, yp;
-	float vx, vy, vt;
+	vec<2> pos;
+	vec<2> prev_pos;
+	vec<2> v;
+	float vt;
 	float m;
 	float r;
-	float red, green, blue;
+	vec<3> rgb;
 } object;

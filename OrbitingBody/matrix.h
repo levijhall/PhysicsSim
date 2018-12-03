@@ -1,6 +1,8 @@
 #pragma once
 
-#include "core.h"
+#include <cstdio>
+#include <initializer_list>
+#include <stdexcept>
 
 //TODO: matrix<0> = NULL
 
@@ -55,6 +57,10 @@ struct matrix
 	~matrix()
 	{
 		delete[] d;
+	}
+	float &operator[](unsigned m)
+	{
+		return d[m];
 	}
 	/*
 	float *operator[](unsigned m)
@@ -177,7 +183,7 @@ struct matrix
 	 * Conventions are an unnecessary risk for this abstraction.
 	 */
 
-	matrix<r_dim, r_dim> &
+	matrix<r_dim, c_dim> &
 		operator*=(const float constant)
 	{
 		for (unsigned i = 0; i < row; i++)
@@ -285,7 +291,7 @@ struct matrix
 	}
 
 	float
-		dotProduct(const matrix<r_dim, c_dim> &other)
+		dotProduct(const matrix<r_dim, c_dim> &other) const
 	{
 		static_assert(r_dim == 1 || c_dim == 1, "Dot Product only defined on vectors.");
 
@@ -296,7 +302,7 @@ struct matrix
 	}
 
 	auto
-		crossProduct(const matrix<r_dim, c_dim> &other)
+		crossProduct(const matrix<r_dim, c_dim> &other) const
 	{
 		static_assert(r_dim == 1 || c_dim == 1, "Cross Product only defined on vectors.");
 
@@ -573,7 +579,7 @@ float det(const matrix<r_dim> &__M)
 		subM = sub(__M, 1, j + 1);
 		sign = parity(j);
 		minor = __M.d[j];
-		detV = det(subM);
+		detV = det(subM); //adjoint
 
 		__res += sign * minor * detV;
 	}
@@ -647,4 +653,13 @@ sum(const matrix<r_dim, c_dim> &__M)
 			res += __M.d[i * c_dim + j];
 
 	return res;
+}
+
+template <unsigned r_dim, unsigned c_dim>
+float
+magnitude(const matrix<r_dim, c_dim> &__M)
+{
+	static_assert(r_dim == 1 || c_dim == 1, "Dot Product only defined on vectors.");
+
+	return sqrtf(__M.dotProduct(__M));
 }

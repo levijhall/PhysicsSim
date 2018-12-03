@@ -1,10 +1,6 @@
 #include "draw.h"
 #include "laws.h"
 #include "collisions.h"
-#include "matrix.h"
-
-template<unsigned dim>
-using vec = matrix<1, dim>;
 
 void runTests()
 {
@@ -49,15 +45,13 @@ int sgn(T val)
 float kineticEnergy(object* ball)
 {
 	float m = ball->m;
-	float vx = ball->vx;
-	float vy = ball->vy;
-	return 0.5f * m * fabs(vx * vx + vy * vy);
+	return 0.5f * m * fabs(ball->v.dotProduct(ball->v));
 }
 
 float potientalEnergy(object* ball)
 {
 	float m = ball->m;
-	float y = ball->y;
+	float y = ball->pos[1];
 	return m * fabs(g) * (y - (-1.f + ball->r));
 }
 
@@ -78,26 +72,20 @@ float systemEnergy(object* ballpit, const size_t ballCount)
 void applyTerminalVelocity(object* ball)
 {
 	//method: similar triangles
-	float v = sqrtf(ball->vx * ball->vx + ball->vy * ball->vy);
+	float v = magnitude(ball->v);
 	float vt = ball->vt;
 	if (v > vt)
 	{
 		/**/printf("terminal\n");
-		ball->vx = ball->vx * vt / v;
-		ball->vy = ball->vy * vt / v;
+		ball->v *= vt / v;
 	}
 }
 
 float dist(object* ball1, object* ball2)
 {
-	float x1 = ball1->x;
-	float x2 = ball2->x;
-	float y1 = ball1->y;
-	float y2 = ball2->y;
-	float dx = x1 - x2;
-	float dy = y1 - y2;
+	vec<2> dist = ball1->pos - ball2->pos;
 
-	return sqrtf(dx * dx + dy * dy);
+	return magnitude(dist);
 }
 
 int main(void)
@@ -120,14 +108,14 @@ int main(void)
 
 	/* Make the window's context current */
 	glfwMakeContextCurrent(window);
-	///                  x,      y,    xp,     yp,     vx,  vy,    vt,   m,     r, red, grn, blu
-	object ball1 = {   0.f,  0.75f,  0.0f,  0.75f,  0.01f, 0.f,  0.2f, 0.5f, 0.05f, 1.f, 0.f, 0.f };
-	object ball2 = {  0.5f, -0.75f,  0.5f, -0.75f, 0.003f, 0.f, 0.05f,  1.f, 0.1f, 0.f, 1.f, 0.f };
-	object ball3 = {   0.f,  -0.7f,   0.f,   0.9f,    0.f, 0.f,  0.2f,  8.f, 0.2f, 0.f,  0.f, 1.f };
+	///                  x,     y,     xp,      yp,        vx,  vy,     vt,    m,     r,  red,  grn, blu
+	object ball1 = { {0.f,  0.75f},  {0.0f,  0.75f},  {0.01f,  0.f},  0.2f,  0.5f, 0.05f, {1.f, 0.f, 0.f} };
+	object ball2 = { {0.5f, -0.75f}, {0.5f, -0.75f},  {0.003f, 0.f},  0.05f, 1.f,  0.1f,  {0.f, 1.f, 0.f} };
+	object ball3 = { {0.f,  -0.7f},  {0.f,   0.9f},   {0.f,    0.f},  0.2f,  8.f,  0.2f,  {0.f,  0.f, 1.f} };
 
-	object ball4 = { -0.5f, 0.75f, -0.5f, -0.75f, 0.014f, 0.f,  0.1f, 0.5f, 0.05f, 1.f, 0.5f, 0.2f };
-	object ball5 = {  0.5f, 0.75f, -0.5f, -0.75f, 0.014f, 0.f,  0.1f, 0.5f, 0.05f, 1.f, 0.2f, 0.5f };
-	object empty = {   0.f,   0.f,   0.f,    0.f,    0.f, 0.f,   0.f,  0.f,   0.f, 0.f,  0.f,  0.f };
+	object ball4 = { {-0.5f, 0.75f}, {-0.5f, -0.75f}, {0.014f, 0.f},  0.1f, 0.5f,  0.05f, {1.f, 0.5f, 0.2f} };
+	object ball5 = { {0.5f, 0.75f},  {-0.5f, -0.75f}, {0.014f, 0.f},  0.1f, 0.5f,  0.05f, {1.f, 0.2f, 0.5f} };
+	object empty = { { 0.f,   0.f},  {0.f,    0.f},   {0.f,    0.f},  0.f,  0.f,   0.f,   {0.f,  0.f,  0.f} };
 
 	const size_t ballCount = 5;
 	object ballpit[] = { ball1, ball2, ball3, ball4, ball5};
@@ -164,40 +152,42 @@ int main(void)
 			object* ball = &ballpit[i];
 
 			//previous positions
-			ball->xp = ball->x;
-			ball->yp = ball->y;
+			ball->prev_pos = ball->pos;
 
 			//acceleration
-			ball->vy += g * timeScale;
+			ball->v[1] += g * timeScale;
 
 			//velocity
-			ball->x += ball->vx * timeScale;
-			ball->y += ball->vy * timeScale;
+			ball->pos += ball->v * timeScale;
 
 			//terminal net velocity
 			applyTerminalVelocity(ball);
 
 			//wall collisions
-			if (ball->y > 1.f - ball->r)
+			float x = ball->pos[0];
+			float y = ball->pos[1];
+			float vx = ball->v[0];
+			float vy = ball->v[1];
+			if (ball->pos[1] > 1.f - ball->r)
 			{
-				ball->y = 2.f - 2 * ball->r - ball->y;
-				ball->vy = -ball->vy;
+				ball->pos[1] = 2.f - 2 * ball->r - ball->pos[1];
+				ball->v[1] *= -1.f;
 			}
-			if (ball->y < -1.f + ball->r)
+			if (ball->pos[1] < -1.f + ball->r)
 			{
-				ball->y = -2.f + 2 * ball->r - ball->y;
-				ball->vy = -ball->vy;
+				ball->pos[1] = -2.f + 2 * ball->r - ball->pos[1];
+				ball->v[1] *= -1;
 			}
 
-			if (ball->x > 1.f - ball->r)
+			if (ball->pos[0] > 1.f - ball->r)
 			{
-				ball->x = 2.f - 2 * ball->r - ball->x;
-				ball->vx = -ball->vx;
+				ball->pos[0] = 2.f - 2 * ball->r - ball->pos[0];
+				ball->v[0] *= -1.f;
 			}
-			if (ball->x < -1.f + ball->r)
+			if (ball->pos[0] < -1.f + ball->r)
 			{
-				ball->x = -2.f + 2 * ball->r - ball->x;
-				ball->vx = -ball->vx;
+				ball->pos[0] = -2.f + 2 * ball->r - ball->pos[0];
+				ball->v[0] *= -1.f;
 			}
 			/*
 			if (ball->y < -1.f + ball->r)
@@ -214,7 +204,8 @@ int main(void)
 			}
 			*/
 
-			if (ball->vy + g * timeScale < 0.f && ball->vy > 0.f)
+			//heighest point
+			if (ball->v[1] + g * timeScale < 0.f && ball->v[1] > 0.f)
 			{
 				//**/printf("kinetic: %f, potiential: %f\n", kineticEnergy(ball), potientalEnergy(ball));
 			}
@@ -224,14 +215,14 @@ int main(void)
 			{
 				object* other = &ballpit[j];
 
-				float Xdist = fabs(ball->x - other->x);
-				float Ydist = fabs(ball->y - other->y);
+				vec<2> dist = ball->pos - other->pos;
+				dist.apply(fabs);
 				float Rdist = ball->r + other->r;
 
-				if (Xdist < Rdist && Ydist < Rdist)
+				if (dist[0] < Rdist && dist[1] < Rdist)
 				{
 					//**/printf("close (x(%f), y(%f) < r(%f)\n", Xdist, Ydist, Rdist);
-					if (Rdist * Rdist > Xdist * Xdist + Ydist * Ydist)
+					if (Rdist * Rdist > dist.dotProduct(dist))
 					{
 						float t = circularBodyTimeInstance(ball, other);
 						if (t < 1.f)
@@ -241,62 +232,50 @@ int main(void)
 							energy0 = kineticEnergy(ball) + kineticEnergy(other);
 
 							//reverse to earliest point of contact
-							ball->x  = ball->x  * t + ball->xp  * (1 - t);
-							ball->y  = ball->y  * t + ball->yp  * (1 - t);
-							other->x = other->x * t + other->xp * (1 - t);
-							other->y = other->y * t + other->yp * (1 - t);
+							ball->pos = ball->pos  * t + ball->prev_pos  * (1 - t);
+							other->pos = other->pos * t + other->prev_pos * (1 - t);
+							dist = ball->pos - other->pos;
 
 							//normal vector along contact point
-							float magn  =  ball->r + other->r;
-							float distance = dist(ball, other); //t is not precise enough (magn != distance)
-							float xNorm = (ball->x - other->x) / distance;
-							float yNorm = (ball->y - other->y) / distance;
-							float xPerp = -yNorm;
-							float yPerp =  xNorm;
+							float magn = magnitude(dist); //t is not precise enough (magn != r + R)
+							vec<2> norm = (ball->pos - other->pos) / distance;
+							vec<2> perp { -norm[1], norm[0] };
 
-							//projection of velocities along normal and perpendicular
-							float normBall  = xNorm * ball->vx  + yNorm * ball->vy;
-							float normOther = xNorm * other->vx + yNorm * other->vy;
-							float perpBall  = xPerp * ball->vx  + yPerp * ball->vy;
-							float perpOther = xPerp * other->vx + yPerp * other->vy;
+							//traditional
+							object t1;
+							t1.m = ball->m;
+							t1.pos = ball->pos;
+							t1.v = ball->v;
+							object t2;
+							t2.m = other->m;
+							t2.pos = other->pos;
+							t2.v = other->v;
+
+							//projection of velocities along normal and perpendicular coordinates
+							matrix<2> coord = concatColumns(norm, perp);
+							ball->v  = T(coord) * ball->v;
+							other->v = T(coord) * other->v;
 
 							//test1
-							empty.m  = ball->m;
-							empty.vx = normBall;
-							empty.vy = perpBall;
-							energy1 = kineticEnergy(&empty);
-
-							empty.m  = other->m;
-							empty.vx = normOther;
-							empty.vy = perpOther;
-							energy1 += kineticEnergy(&empty);
-
+							energy1 = kineticEnergy(ball) + kineticEnergy(other);
 							if (fabs(energy0 - energy1) > 0.0001f)
 								printf("changed kinetic across projection!%f\n", energy0 - energy1);
 
 							//momentum converation
-							float newNormBall  = ellasticCollision(ball->m,  normBall,  other->m, normOther);
-							float newNormOther = ellasticCollision(other->m, normOther, ball->m,  normBall);
+							float newNormBall  = ellasticCollision(ball->m,  ball->v[0],  other->m, other->v[0]);
+							float newNormOther = ellasticCollision(other->m, other->v[0], ball->m, ball->v[0]);
+
+							ball->v[0] = newNormBall;
+							other->v[0] = newNormOther;
 
 							//test2
-							empty.m = ball->m;
-							empty.vx = newNormBall;
-							empty.vy = perpBall;
-							energy2 = kineticEnergy(&empty);
-
-							empty.m = other->m;
-							empty.vx = newNormOther;
-							empty.vy = perpOther;
-							energy2 += kineticEnergy(&empty);
-
+							energy2 = kineticEnergy(ball) + kineticEnergy(other);
 							if (fabs(energy1 - energy2) > 0.0001f)
 								printf("changed kinetic across momentum transfer! %f\n", energy1 - energy2);
 
 							//revert coordinates
-							ball->vx  = newNormBall  * xNorm + perpBall  * xPerp;
-							ball->vy  = newNormBall  * yNorm + perpBall  * yPerp;
-							other->vx = newNormOther * xNorm + perpOther * xPerp;
-							other->vy = newNormOther * yNorm + perpOther * yPerp;
+							ball->v  = coord * ball->v;
+							other->v = coord * other->v;
 
 							//ball->vy  = g * (1 - t) * timeScale;
 							//other->vy = g * (1 - t) * timeScale;
@@ -311,21 +290,19 @@ int main(void)
 							applyTerminalVelocity(other);
 
 							//use velocity for new direction with remaining turn
-							ball->x  += ball->vx  * (1 - t) * timeScale;
-							ball->y  += ball->vy  * (1 - t) * timeScale;
-							other->x += other->vx * (1 - t) * timeScale;
-							other->y += other->vy * (1 - t) * timeScale;
+							ball->pos  += ball->v  * (1 - t) * timeScale;
+							other->pos += other->v * (1 - t) * timeScale;
 						}
 					}
 				}
 			}
 
 			//fill
-			glColor3f(ball->red, ball->green, ball->blue);
-			drawCircleFilled(ball->r, ball->x, ball->y);
+			glColor3f(ball->rgb[0], ball->rgb[1], ball->rgb[2]);
+			drawCircleFilled(ball->r, ball->pos[0], ball->pos[1]);
 			//outline
 			glColor3f(1.f, 1.f, 1.f);
-			drawCircle(ball->r, ball->x, ball->y);
+			drawCircle(ball->r, ball->pos[0], ball->pos[1]);
 		}
 
 		netEnergy = systemEnergy(ballpit, ballCount);

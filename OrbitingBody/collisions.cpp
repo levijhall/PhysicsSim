@@ -2,10 +2,10 @@
 
 float circularBodyTimeInstance(object* ball1, object* ball2)
 {
-	float ax = ball1->xp - ball2->xp;
-	float ay = ball1->yp - ball2->yp;
-	float bx = ball1->x + ball2->x - ax;
-	float by = ball1->y + ball2->y - ay;
+	float ax = ball1->prev_pos[0] - ball2->prev_pos[0];
+	float ay = ball1->prev_pos[1] - ball2->prev_pos[1];
+	float bx = ball1->pos[0] + ball2->pos[0] - ax;
+	float by = ball1->pos[1] + ball2->pos[1] - ay;
 	float d = ball1->r + ball2->r;
 
 	float a = (ax * ax + ay * ay - d * d);
