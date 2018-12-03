@@ -23,6 +23,7 @@
     <ProjectGuid>{30BA9C8F-5FFB-434C-AEBB-479B6B3096BF}</ProjectGuid>
     <RootNamespace>OrbitingBody</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <ProjectName>ParticlesInABox</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
