@@ -189,6 +189,10 @@ int main(void)
 				ball->pos[0] = -2.f + 2 * ball->r - ball->pos[0];
 				ball->v[0] *= -1.f;
 			}
+
+			//Removed for the time being.
+			//Handles time-reversals, but only for the current object.
+			//TO-DO: Path vectors, with time correspondence.
 			/*
 			if (ball->y < -1.f + ball->r)
 			{
@@ -238,7 +242,7 @@ int main(void)
 
 							//normal vector along contact point
 							float magn = magnitude(dist); //t is not precise enough (magn != r + R)
-							vec<2> norm = (ball->pos - other->pos) / distance;
+							vec<2> norm = (ball->pos - other->pos) / magn;
 							vec<2> perp { -norm[1], norm[0] };
 
 							//traditional
@@ -259,7 +263,7 @@ int main(void)
 							//test1
 							energy1 = kineticEnergy(ball) + kineticEnergy(other);
 							if (fabs(energy0 - energy1) > 0.0001f)
-								printf("changed kinetic across projection!%f\n", energy0 - energy1);
+								printf("changed kinetic across projection! %f\n", energy0 - energy1);
 
 							//momentum converation
 							float newNormBall  = ellasticCollision(ball->m,  ball->v[0],  other->m, other->v[0]);
