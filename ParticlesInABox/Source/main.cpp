@@ -2,6 +2,8 @@
 #include "laws.h"
 #include "collisions.h"
 
+#define unitTest false
+
 void runTests()
 {
 	int res = 0;
@@ -90,7 +92,11 @@ float dist(object* ball1, object* ball2)
 
 int main(void)
 {
-	runTests();
+	if (unitTest)
+	{
+		runTests();
+	}
+	
 
 	GLFWwindow* window;
 
@@ -126,8 +132,8 @@ int main(void)
 	float maxEnergy = 0.f;
 	float minEnergy = 0.f;
 	float lastEnergy = 0.f;
-	uint count = 0;
-	uint lastCount = 0;
+	unsigned count = 0;
+	unsigned lastCount = 0;
 
 	prevEnergy = systemEnergy(ballpit, ballCount);
 	minEnergy = prevEnergy;
@@ -245,16 +251,6 @@ int main(void)
 							vec<2> norm = (ball->pos - other->pos) / magn;
 							vec<2> perp { -norm[1], norm[0] };
 
-							//traditional
-							object t1;
-							t1.m = ball->m;
-							t1.pos = ball->pos;
-							t1.v = ball->v;
-							object t2;
-							t2.m = other->m;
-							t2.pos = other->pos;
-							t2.v = other->v;
-
 							//projection of velocities along normal and perpendicular coordinates
 							matrix<2> coord = concatColumns(norm, perp);
 							ball->v  = T(coord) * ball->v;
@@ -303,10 +299,12 @@ int main(void)
 
 			//fill
 			glColor3f(ball->rgb[0], ball->rgb[1], ball->rgb[2]);
-			drawCircleFilled(ball->r, ball->pos[0], ball->pos[1]);
+			drawCircleFilled(ball->pos, ball->r);
 			//outline
 			glColor3f(1.f, 1.f, 1.f);
-			drawCircle(ball->r, ball->pos[0], ball->pos[1]);
+			drawCircle(ball->pos, ball->r);
+			//arrows
+			drawArrow(ball->pos, ball->pos + 5 * ball->v, 0.75f);
 		}
 
 		netEnergy = systemEnergy(ballpit, ballCount);
@@ -327,7 +325,6 @@ int main(void)
 			lastCount = count;
 			prevEnergy = netEnergy;
 		}
-			
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);

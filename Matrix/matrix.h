@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 #include <cstdio>
 #include <initializer_list>
 #include <stdexcept>
@@ -375,6 +373,15 @@ operator+(const matrix<r_dim> &__lhs,
 //Martix subtraction
 template <unsigned r_dim, unsigned c_dim>
 matrix<r_dim, c_dim>
+operator-(const matrix<r_dim, c_dim> &__rhs)
+{
+	matrix<r_dim, c_dim> __res;
+	__res -= __rhs;
+	return __res;
+}
+
+template <unsigned r_dim, unsigned c_dim>
+matrix<r_dim, c_dim>
 operator-(const matrix<r_dim, c_dim> &__lhs,
 	const matrix<r_dim, c_dim> &__rhs)
 {
@@ -665,3 +672,4 @@ magnitude(const matrix<r_dim, c_dim> &__M)
 
 	return sqrtf(__M.dotProduct(__M));
 }
+

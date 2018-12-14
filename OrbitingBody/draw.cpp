@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "draw.h"
 
 void drawCircleMode(vec<2> center, float radius, unsigned sides, unsigned MODE)

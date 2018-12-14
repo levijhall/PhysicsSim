@@ -21,3 +21,8 @@ float det(const matrix<0> &__M)
 {
 	return 0.f;
 }
+
+int main()
+{
+	return 0;
+}

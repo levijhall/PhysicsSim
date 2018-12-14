@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Matrix", "Matrix\Matrix.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ParticlesInABox", "ParticlesInABox\ParticlesInABox.vcxproj", "{30BA9C8F-5FFB-434C-AEBB-479B6B3096BF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OrbitingBody", "OrbitingBody\OrbitingBody.vcxproj", "{AAC54E49-8F62-464B-B2D9-19A7DFF63BAB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{30BA9C8F-5FFB-434C-AEBB-479B6B3096BF}.Release|x64.Build.0 = Release|x64
 		{30BA9C8F-5FFB-434C-AEBB-479B6B3096BF}.Release|x86.ActiveCfg = Release|Win32
 		{30BA9C8F-5FFB-434C-AEBB-479B6B3096BF}.Release|x86.Build.0 = Release|Win32
+		{AAC54E49-8F62-464B-B2D9-19A7DFF63BAB}.Debug|x64.ActiveCfg = Debug|x64
+		{AAC54E49-8F62-464B-B2D9-19A7DFF63BAB}.Debug|x64.Build.0 = Debug|x64
+		{AAC54E49-8F62-464B-B2D9-19A7DFF63BAB}.Debug|x86.ActiveCfg = Debug|Win32
+		{AAC54E49-8F62-464B-B2D9-19A7DFF63BAB}.Debug|x86.Build.0 = Debug|Win32
+		{AAC54E49-8F62-464B-B2D9-19A7DFF63BAB}.Release|x64.ActiveCfg = Release|x64
+		{AAC54E49-8F62-464B-B2D9-19A7DFF63BAB}.Release|x64.Build.0 = Release|x64
+		{AAC54E49-8F62-464B-B2D9-19A7DFF63BAB}.Release|x86.ActiveCfg = Release|Win32
+		{AAC54E49-8F62-464B-B2D9-19A7DFF63BAB}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
