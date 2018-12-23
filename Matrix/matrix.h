@@ -11,12 +11,12 @@ struct matrix
 {
 	const unsigned row = r_dim;
 	const unsigned col = c_dim;
-	float *d;
+	double *d;
 
-	matrix() : d(new float[r_dim * c_dim]()) {}
+	matrix() : d(new double[r_dim * c_dim]()) {}
 
 	//template <typename T>
-	matrix(std::initializer_list<float> l) : d(new float[r_dim * c_dim]())
+	matrix(std::initializer_list<double > l) : d(new double[r_dim * c_dim]())
 	{
 		//Should be a static_assert, but it won't work...
 		if (l.size() > r_dim * c_dim)
@@ -32,7 +32,7 @@ struct matrix
 	}
 
 	//Copy constructor
-	matrix(const matrix<r_dim, c_dim> &other) : d(new float[r_dim * c_dim]())
+	matrix(const matrix<r_dim, c_dim> &other) : d(new double [r_dim * c_dim]())
 	{
 		for (unsigned i = 0; i < r_dim * c_dim; i++)
 		{
@@ -46,7 +46,7 @@ struct matrix
 		other.d = nullptr;
 	}
 
-	matrix(const float constant) : d(new float[r_dim * c_dim]())
+	matrix(const double constant) : d(new double [r_dim * c_dim]())
 	{
 		static_assert(r_dim == c_dim, "Initializing with a constant requires a square matrix.");
 
@@ -58,17 +58,17 @@ struct matrix
 	{
 		delete[] d;
 	}
-	float &operator[](unsigned m)
+	double &operator[](unsigned m)
 	{
 		return d[m];
 	}
 	/*
-	float *operator[](unsigned m)
+	double *operator[](unsigned m)
 	{
 		return &d[m * col];
 	}
 	*/
-	float operator()(unsigned m, unsigned n)
+	double operator()(unsigned m, unsigned n)
 	{
 		return d[m * col + n];
 	}
@@ -112,7 +112,7 @@ struct matrix
 	}
 
 	matrix<r_dim, r_dim> &
-		operator=(const float constant)
+		operator=(const double constant)
 	{
 		for (unsigned i = 0; i < row; i++)
 			for (unsigned j = 0; j < col; j++)
@@ -141,7 +141,7 @@ struct matrix
 	}
 
 	matrix<r_dim, r_dim> &
-		operator+=(const float constant)
+		operator+=(const double constant)
 	{
 		for (unsigned i = 0; i < row; i++)
 			d[i * col + i] += constant;
@@ -164,7 +164,7 @@ struct matrix
 	}
 
 	matrix<r_dim, r_dim> &
-		operator-=(const float constant)
+		operator-=(const double constant)
 	{
 		for (unsigned i = 0; i < row; i++)
 			d[i * col + i] -= constant;
@@ -184,7 +184,7 @@ struct matrix
 	 */
 
 	matrix<r_dim, c_dim> &
-		operator*=(const float constant)
+		operator*=(const double constant)
 	{
 		for (unsigned i = 0; i < row; i++)
 			for (unsigned j = 0; j < col; j++)
@@ -194,7 +194,7 @@ struct matrix
 	}
 
 	matrix<r_dim, c_dim> &
-		operator/=(const float constant)
+		operator/=(const double constant)
 	{
 		for (unsigned i = 0; i < row; i++)
 			for (unsigned j = 0; j < col; j++)
@@ -205,7 +205,7 @@ struct matrix
 
 	//May not be usefully to have
 	matrix<r_dim, c_dim> &
-		apply(float(*func)(float))
+		apply(double (*func)(double ))
 	{
 		for (unsigned i = 0; i < row; i++)
 			for (unsigned j = 0; j < col; j++)
@@ -254,7 +254,7 @@ struct matrix
 		if ((row1 >= row) || (row2 >= row))
 			throw std::out_of_range("No such row index in the Matrix.");
 
-		float temp;
+		double temp;
 		for (unsigned j = 0; j < col; j++)
 		{
 			temp = d[row1 * col + j];
@@ -271,7 +271,7 @@ struct matrix
 		if ((col1 >= col) || (col2 >= col))
 			throw std::out_of_range("No such column index in the Matrix.");
 
-		float temp;
+		double temp;
 		for (unsigned i = 0; i < row; i++)
 		{
 			temp = d[i * col + col1];
@@ -281,7 +281,7 @@ struct matrix
 	}
 
 	void
-		linearAddRow(unsigned fromRow, unsigned toRow, float scaler)
+		linearAddRow(unsigned fromRow, unsigned toRow, double scaler)
 	{
 		if ((fromRow >= row) || (toRow >= row))
 			throw std::out_of_range("No such row index in the Matrix.");
@@ -290,12 +290,12 @@ struct matrix
 			d[toRow * col + j] += scaler * d[fromRow * col + j];
 	}
 
-	float
+	double 
 		dotProduct(const matrix<r_dim, c_dim> &other) const
 	{
 		static_assert(r_dim == 1 || c_dim == 1, "Dot Product only defined on vectors.");
 
-		float sum = 0;
+		double sum = 0;
 		for (unsigned i = 0; i < r_dim * c_dim; i++)
 			sum += d[i] * other.d[i];
 		return sum;
@@ -352,7 +352,7 @@ operator+(const matrix<r_dim, c_dim> &__lhs,
 
 template <unsigned r_dim>
 matrix<r_dim>
-operator+(const float &__constant,
+operator+(const double &__constant,
 	const matrix<r_dim> &__rhs)
 {
 	matrix<r_dim> __res(__constant);
@@ -363,7 +363,7 @@ operator+(const float &__constant,
 template <unsigned r_dim>
 matrix<r_dim>
 operator+(const matrix<r_dim> &__lhs,
-	const float &__constant)
+	const double &__constant)
 {
 	matrix<r_dim> __res(__constant);
 	__res += __lhs;
@@ -392,7 +392,7 @@ operator-(const matrix<r_dim, c_dim> &__lhs,
 
 template <unsigned r_dim>
 matrix<r_dim>
-operator-(const float &__constant,
+operator-(const double &__constant,
 	const matrix<r_dim> &__rhs)
 {
 	matrix<r_dim> __res(__constant);
@@ -403,7 +403,7 @@ operator-(const float &__constant,
 template <unsigned r_dim>
 matrix<r_dim>
 operator-(const matrix<r_dim> &__lhs,
-	const float &__constant)
+	const double &__constant)
 {
 	matrix<r_dim> __res(__lhs);
 	__res -= matrix<r_dim>(__constant);
@@ -431,7 +431,7 @@ operator*(const matrix<r1_dim, c1_dim> &__lhs,
 template <unsigned r_dim, unsigned c_dim>
 matrix<r_dim, c_dim>
 operator*(const matrix<r_dim, c_dim> &__lhs,
-	const float __rhs)
+	const double __rhs)
 {
 	matrix<r_dim, c_dim> __res;
 
@@ -444,7 +444,7 @@ operator*(const matrix<r_dim, c_dim> &__lhs,
 
 template <unsigned r_dim, unsigned c_dim>
 matrix<r_dim, c_dim>
-operator*(const float __lhs,
+operator*(const double __lhs,
 	const matrix<r_dim, c_dim> &__rhs)
 {
 	matrix<r_dim, c_dim> __res;
@@ -460,7 +460,7 @@ operator*(const float __lhs,
 template <unsigned r_dim, unsigned c_dim>
 matrix<r_dim, c_dim>
 operator/(const matrix<r_dim, c_dim> &__lhs,
-	const float __rhs)
+	const double __rhs)
 {
 	matrix<r_dim, c_dim> __res;
 
@@ -529,9 +529,9 @@ T(const matrix<r_dim, c_dim> &__M)
 
 //Trace
 template <unsigned r_dim>
-float tr(const matrix<r_dim, r_dim> &__M)
+double tr(const matrix<r_dim, r_dim> &__M)
 {
-	float __sum = 0;
+	double __sum = 0;
 
 	for (unsigned i = 0; i < r_dim; i++)
 		__sum += __M.d[i * r_dim + i];
@@ -569,19 +569,19 @@ sub(const matrix<r_dim, c_dim> &__M, unsigned __row, unsigned __col)
 	return __res;
 }
 
-float parity(unsigned i);
+double parity(unsigned i);
 
 //Determinant
 template <unsigned r_dim>
-float det(const matrix<r_dim> &__M)
+double det(const matrix<r_dim> &__M)
 {
 	//printf ("det n > 2\n");
-	float __res = 0;
+	double __res = 0;
 
 	matrix<r_dim - 1> subM;
-	float sign = 0;
-	float minor = 0;
-	float detV = 0;
+	double sign = 0;
+	double minor = 0;
+	double detV = 0;
 
 	for (unsigned j = 0; j < r_dim; j++)
 	{
@@ -597,11 +597,11 @@ float det(const matrix<r_dim> &__M)
 }
 
 template <>
-float det(const matrix<2> &__M);
+double det(const matrix<2> &__M);
 template <>
-float det(const matrix<1> &__M);
+double det(const matrix<1> &__M);
 template <>
-float det(const matrix<0> &__M);
+double det(const matrix<0> &__M);
 
 template <unsigned r_dim>
 matrix<r_dim>
@@ -641,7 +641,7 @@ inverse(const matrix<r_dim> &__M)
 
 template <unsigned r_dim, unsigned c_dim>
 matrix<r_dim, c_dim>
-apply(const matrix<r_dim, c_dim> &__M, float(*func)(float)) {
+apply(const matrix<r_dim, c_dim> &__M, double (*func)(double )) {
 	matrix<r_dim, c_dim> __res;
 
 	for (unsigned i = 0; i < r_dim; i++)
@@ -652,10 +652,10 @@ apply(const matrix<r_dim, c_dim> &__M, float(*func)(float)) {
 }
 
 template <unsigned r_dim, unsigned c_dim>
-float
+double 
 sum(const matrix<r_dim, c_dim> &__M)
 {
-	float res = 0;
+	double res = 0;
 
 	for (unsigned i = 0; i < r_dim; i++)
 		for (unsigned j = 0; j < c_dim; j++)
@@ -665,11 +665,11 @@ sum(const matrix<r_dim, c_dim> &__M)
 }
 
 template <unsigned r_dim, unsigned c_dim>
-float
+double 
 magnitude(const matrix<r_dim, c_dim> &__M)
 {
 	static_assert(r_dim == 1 || c_dim == 1, "Dot Product only defined on vectors.");
 
-	return sqrtf(__M.dotProduct(__M));
+	return sqrt(__M.dotProduct(__M));
 }
 
