@@ -4,17 +4,17 @@
 //extended collisions
 
 //returns the new v1 value
-float ellasticCollision(float m1, float v1, float m2, float v2)
+double ellasticCollision(double m1, double v1, double m2, double v2)
 {
-	float u1;
+	double u1;
 	u1 = (m1 - m2) / (m1 + m2) * v1 + (2 * m2) / (m1 + m2) * v2;
 	return u1;
 }
 
 //returns the new v1 value
-float inellasticCollision(float m1, float v1, float m2, float v2)
+double inellasticCollision(double m1, double v1, double m2, double v2)
 {
-	float u;
+	double u;
 	u = m1 / (m1 + m2) * v1;
 	return u;
 }

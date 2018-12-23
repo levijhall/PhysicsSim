@@ -3,11 +3,11 @@
 #include "core.h"
 
 //values
-const float g = -0.0001f;
-const float timeScale = 1.f;
+const double g = -0.0001f;
+const double timeScale = 0.05f;
 
 //returns the new v1 value
-float ellasticCollision(float m1, float v1, float m2, float v2);
+double ellasticCollision(double m1, double v1, double m2, double v2);
 
 //returns the new v1 value
-float inellasticCollision(float m1, float v1, float m2, float v2);
+double inellasticCollision(double m1, double v1, double m2, double v2);

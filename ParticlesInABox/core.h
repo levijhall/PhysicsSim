@@ -13,8 +13,8 @@ typedef struct object_s {
 	vec<2> pos;
 	vec<2> prev_pos;
 	vec<2> v;
-	float vt;
-	float m;
-	float r;
+	double vt;
+	double m;
+	double r;
 	vec<3> rgb;
 } object;
