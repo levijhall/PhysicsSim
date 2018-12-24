@@ -293,6 +293,7 @@ int main()
 
 void scrollCallback(GLFWwindow *window, double xOffset, double yOffset)
 {
+	//Need to move funtion inside of main loop
 	if (yOffset != 0.f)
 	{
 		cam.zoom(yOffset);
@@ -307,9 +308,7 @@ static void cursorPositionCallback(GLFWwindow *window, double xpos, double ypos)
 
 void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
-	double xpos, ypos;
-	glfwGetCursorPos(window, &xpos, &ypos);
-	std::cout << "(" << xpos << ", " << ypos << ")" << std::endl;
+	//Do Nothing
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
