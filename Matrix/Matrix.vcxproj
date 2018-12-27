@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{6EA3B3E4-86B8-4C52-BFD7-E17F035F034F}</ProjectGuid>
     <RootNamespace>Matrix</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
