@@ -1,8 +1,59 @@
 #include "draw.h"
 #include "laws.h"
 #include "collisions.h"
+#include "utility.h"
+#include <memory>
 
 #define unitTest false
+
+unsigned iter = 0;
+const unsigned maxIter = 160;
+const double timeScale = 0.005f;
+
+class trail
+{
+public:
+	void drawTrail()
+	{
+		for (unsigned i = 0; i < count; i++)
+		{
+			glColor4d(1.f, 1.f, 1.f, 1.f);
+			drawCircle(d[i], 0.001f, 6);
+		}
+	}
+	void addPoint(vec<2> point)
+	{
+		if (count < size)
+		{
+			std::uninitialized_copy(&point, &point + 1, &d[curr]);
+			curr++;
+			count++;
+		}
+		else
+		{
+			curr = curr % size;
+			d[curr] = point;
+			curr++;
+		}
+		
+	}
+private:
+	const unsigned size = 5000;
+	unsigned count = 0;
+	unsigned curr = 0;
+
+	vec<2> d[5000];
+};
+
+struct box
+{
+	vec<2> pos = { 0.f, 0.f };
+	vec<2> prev_pos = { 0.f, 0.f };
+	vec<2> v = { 0.f, 0.f };
+	vec<2> dimensions = { 1.9f, 1.9f };
+	double m = 50.f;
+	double vt = 0.1f;
+};
 
 void runTests()
 {
@@ -38,12 +89,6 @@ void runTests()
 	printf("\n");
 }
 
-template <typename T>
-int sgn(T val)
-{
-	return (T(0) < val) - (val < T(0));
-}
-
 double kineticEnergy(object* ball)
 {
 	double m = ball->m;
@@ -71,30 +116,8 @@ double systemEnergy(object* ballpit, const size_t ballCount)
 	return netEnergy;
 }
 
-void applyTerminalVelocity(object* ball)
-{
-	//method: similar triangles
-	double v = magnitude(ball->v);
-	double vt = ball->vt;
-	if (v > vt)
-	{
-		/**/printf("terminal\n");
-		ball->v *= vt / v;
-	}
-}
-
-double dist(object* ball1, object* ball2)
-{
-	vec<2> dist = ball1->pos - ball2->pos;
-
-	return magnitude(dist);
-}
-
 int main(void)
 {
-	unsigned iter = 0;
-	const unsigned maxIter = 20;
-
 	if (unitTest)
 	{
 		runTests();
@@ -119,7 +142,7 @@ int main(void)
 	///                  x,     y,     xp,      yp,        vx,  vy,     vt,    m,     r,  red,  grn, blu
 	object ball1 = { {0.f,  0.75f},  {0.0f,  0.75f},  {0.01f,  0.f},  0.2f,  0.5f, 0.05f, {1.f, 0.f, 0.f} };
 	object ball2 = { {0.5f, -0.75f}, {0.5f, -0.75f},  {0.003f, 0.f},  0.05f, 1.f,  0.1f,  {0.f, 1.f, 0.f} };
-	object ball3 = { {0.f,  -0.7f},  {0.f,   0.9f},   {0.f,    0.f},  0.2f,  8.f,  0.2f,  {0.f,  0.f, 1.f} };
+	object ball3 = { {0.f,  -0.7f},  {0.f,   0.9f},   { -0.00275f,    0.f},  0.2f,  8.f,  0.2f,  {0.f,  0.f, 1.f} };
 
 	object ball4 = { {-0.5f, 0.75f}, {-0.5f, -0.75f}, {0.014f, 0.f},  0.1f, 0.5f,  0.05f, {1.f, 0.5f, 0.2f} };
 	object ball5 = { {0.5f, 0.75f},  {-0.5f, -0.75f}, {0.014f, 0.f},  0.1f, 0.5f,  0.05f, {1.f, 0.2f, 0.5f} };
@@ -127,6 +150,10 @@ int main(void)
 
 	const size_t ballCount = 5;
 	object ballpit[] = { ball1, ball2, ball3, ball4, ball5};
+
+	box walls;
+
+	trail box;
 
 	double netEnergy = 0.f;
 	double prevEnergy = 0.f;
@@ -137,7 +164,7 @@ int main(void)
 	unsigned count = 0;
 	unsigned lastCount = 0;
 
-	prevEnergy = systemEnergy(ballpit, ballCount);
+	prevEnergy = systemEnergy(ballpit, ballCount) + 0.5f * walls.m * fabs(walls.v.dotProduct(walls.v));
 	minEnergy = prevEnergy;
 	maxEnergy = prevEnergy;
 	avgEnergy = prevEnergy;
@@ -145,6 +172,8 @@ int main(void)
 
 	printf("Starting energy: %f\n", prevEnergy);
 	//**/printf("kinetic: %f, potiential: %f\n", kineticEnergy(&ball1), potientalEnergy(&ball1));
+
+	unsigned drawCount = 0;
 
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window))
@@ -158,6 +187,9 @@ int main(void)
 		/* Repeat physical calculations scaled with accuracy*/
 		do
 		{
+			walls.prev_pos = walls.pos;
+			walls.pos += walls.v * timeScale;
+
 			for (size_t i = 0; i < ballCount; i++)
 			{
 				object* ball = &ballpit[i];
@@ -168,61 +200,125 @@ int main(void)
 				//acceleration
 				ball->v[1] += g * timeScale;
 
-				//velocity
-				ball->pos += ball->v * timeScale;
-
 				//terminal net velocity
 				applyTerminalVelocity(ball);
 
+				//velocity
+				ball->pos += ball->v * timeScale;	
+
 				//wall collisions
-				double x = ball->pos[0];
-				double y = ball->pos[1];
-				double vx = ball->v[0];
-				double vy = ball->v[1];
-				if (ball->pos[1] > 1.f - ball->r)
+				if (ball->pos[0] > walls.pos[0] + walls.dimensions[0] / 2.f - ball->r)
 				{
-					ball->pos[1] = 2.f - 2 * ball->r - ball->pos[1];
-					ball->v[1] *= -1.f;
+					double t = (walls.pos[0] + walls.dimensions[0] / 2.f - ball->r - ball->prev_pos[0]) / (ball->pos[0] - ball->prev_pos[0]);
+					if (t > 1.f)
+						t = 1.f;
+					if (t < -1.f)
+						t = -1.f;
+					ball->pos[0] = ball->prev_pos[0] * (1 - t) + ball->pos[0] * t;
+					walls.pos[0] = walls.prev_pos[0] * (1 - t) + walls.pos[0] * t;
+
+					double ballNewV = ellasticCollision(ball->m, ball->v[0], walls.m, walls.v[0]);
+					double wallNewV = ellasticCollision(walls.m, walls.v[0], ball->m, ball->v[0]);
+
+					ball->v[0] = ballNewV;
+					walls.v[0] = wallNewV;
+
+					applyTerminalVelocity(ball);
+					double v = magnitude(walls.v);
+					double vt = walls.vt;
+					if (v > vt)
+					{
+						/**/printf("terminal wall\n");
+						walls.v *= vt / v;
+					}
+
+					ball->pos[0] += ball->v[0] * (1 - t) * timeScale;
+					walls.pos[0] += walls.v[0] * (1 - t) * timeScale;
 				}
-				if (ball->pos[1] < -1.f + ball->r)
+				if (ball->pos[0] < walls.pos[0] - walls.dimensions[0] / 2.f + ball->r)
 				{
-					ball->pos[1] = -2.f + 2 * ball->r - ball->pos[1];
-					ball->v[1] *= -1;
+					double t = (walls.pos[0] - walls.dimensions[0] / 2.f + ball->r - ball->prev_pos[0]) / (ball->pos[0] - ball->prev_pos[0]);
+					if (t > 1.f)
+						t = 1.f;
+					if (t < -1.f)
+						t = -1.f;
+					ball->pos[0] = ball->prev_pos[0] * (1 - t) + ball->pos[0] * t;
+					walls.pos[0] = walls.prev_pos[0] * (1 - t) + walls.pos[0] * t;
+
+					double ballNewV = ellasticCollision(ball->m, ball->v[0], walls.m, walls.v[0]);
+					double wallNewV = ellasticCollision(walls.m, walls.v[0], ball->m, ball->v[0]);
+
+					ball->v[0] = ballNewV;
+					walls.v[0] = wallNewV;
+
+					applyTerminalVelocity(ball);
+					double v = magnitude(walls.v);
+					double vt = walls.vt;
+					if (v > vt)
+					{
+						/**/printf("terminal wall\n");
+						walls.v *= vt / v;
+					}
+
+					ball->pos[0] += ball->v[0] * (1 - t) * timeScale;
+					walls.pos[0] += walls.v[0] * (1 - t) * timeScale;
 				}
 
-				if (ball->pos[0] > 1.f - ball->r)
+				if (ball->pos[1] > walls.pos[1] + walls.dimensions[1] / 2.f - ball->r)
 				{
-					ball->pos[0] = 2.f - 2 * ball->r - ball->pos[0];
-					ball->v[0] *= -1.f;
+					double t = (walls.pos[1] + walls.dimensions[1] / 2.f - ball->r - ball->prev_pos[1]) / (ball->pos[1] - ball->prev_pos[1]);
+					if (t > 1.f)
+						t = 1.f;
+					if (t < -1.f)
+						t = -1.f;
+					ball->pos[1] = ball->prev_pos[1] * (1 - t) + ball->pos[1] * t;
+					walls.pos[1] = walls.prev_pos[1] * (1 - t) + walls.pos[1] * t;
+
+					double ballNewV = ellasticCollision(ball->m, ball->v[1], walls.m, walls.v[1]);
+					double wallNewV = ellasticCollision(walls.m, walls.v[1], ball->m, ball->v[1]);
+
+					ball->v[1] = ballNewV;
+					walls.v[1] = wallNewV;
+
+					applyTerminalVelocity(ball);
+					double v = magnitude(walls.v);
+					double vt = walls.vt;
+					if (v > vt)
+					{
+						/**/printf("terminal wall\n");
+						walls.v *= vt / v;
+					}
+
+					ball->pos[1] += ball->v[1] * (1 - t) * timeScale;
+					walls.pos[1] += walls.v[1] * (1 - t) * timeScale;
 				}
-				if (ball->pos[0] < -1.f + ball->r)
+				if (ball->pos[1] < walls.pos[1] - walls.dimensions[1] / 2.f + ball->r)
 				{
-					ball->pos[0] = -2.f + 2 * ball->r - ball->pos[0];
-					ball->v[0] *= -1.f;
-				}
+					double t = (walls.pos[1] - walls.dimensions[1] / 2.f + ball->r - ball->prev_pos[1]) / (ball->pos[1] - ball->prev_pos[1]);
+					if (t > 1.f)
+						t = 1.f;
+					if (t < -1.f)
+						t = -1.f;
+					ball->pos[1] = ball->prev_pos[1] * (1 - t) + ball->pos[1] * t;
+					walls.pos[1] = walls.prev_pos[1] * (1 - t) + walls.pos[1] * t;
 
-				//Removed for the time being.
-				//Handles time-reversals, but only for the current object.
-				//TO-DO: Path vectors, with time correspondence.
-				/*
-				if (ball->y < -1.f + ball->r)
-				{
-					double t = (-1.f + ball->r - ball->yp) / (ball->y - ball->yp);
-					ball->y = trajectory(ball->y, ball->yp, t);
-					//printf("kinetic: %f, potiential: %f\n", kineticEnergy(ball), potientalEnergy(ball));
+					double ballNewV = ellasticCollision(ball->m, ball->v[1], walls.m, walls.v[1]);
+					double wallNewV = ellasticCollision(walls.m, walls.v[1], ball->m, ball->v[1]);
 
-					ball->vy = -ball->vy + 2.f * g * timeScale * (1 - t);
-					ball->y += ball->vy * (1 - t) * timeScale;
+					ball->v[1] = ballNewV;
+					walls.v[1] = wallNewV;
 
-					if (ball->y < -1.f + ball->r)
-						ball->y = -1.f + ball->r;
-				}
-				*/
+					applyTerminalVelocity(ball);
+					double v = magnitude(walls.v);
+					double vt = walls.vt;
+					if (v > vt)
+					{
+						/**/printf("terminal wall\n");
+						walls.v *= vt / v;
+					}
 
-				//heighest point
-				if (ball->v[1] + g * timeScale < 0.f && ball->v[1] > 0.f)
-				{
-					//**/printf("kinetic: %f, potiential: %f\n", kineticEnergy(ball), potientalEnergy(ball));
+					ball->pos[1] += ball->v[1] * (1 - t) * timeScale;
+					walls.pos[1] += walls.v[1] * (1 - t) * timeScale;
 				}
 
 				//ball collisions
@@ -230,80 +326,21 @@ int main(void)
 				{
 					object* other = &ballpit[j];
 
-					vec<2> dist = ball->pos - other->pos;
-					dist.apply(fabs);
-					double Rdist = ball->r + other->r;
+					circularBodyCollision(ball, other, ellasticCollision, timeScale);
 
-					if (dist[0] < Rdist && dist[1] < Rdist)
-					{
-						//**/printf("close (x(%f), y(%f) < r(%f)\n", Xdist, Ydist, Rdist);
-						if (Rdist * Rdist > dist.dotProduct(dist))
-						{
-							double t = circularBodyTimeInstance(ball, other);
-							if (t < 1.f)
-							{
-								//test0
-								double energy0, energy1, energy2, energy3;
-								energy0 = kineticEnergy(ball) + kineticEnergy(other);
-
-								//reverse to earliest point of contact
-								ball->pos = ball->pos  * t + ball->prev_pos  * (1 - t);
-								other->pos = other->pos * t + other->prev_pos * (1 - t);
-								dist = ball->pos - other->pos;
-
-								//normal vector along contact point
-								double magn = magnitude(dist); //t is not precise enough (magn != r + R)
-								vec<2> norm = (ball->pos - other->pos) / magn;
-								vec<2> perp{ -norm[1], norm[0] };
-
-								//projection of velocities along normal and perpendicular coordinates
-								matrix<2> coord = concatColumns(norm, perp);
-								ball->v = T(coord) * ball->v;
-								other->v = T(coord) * other->v;
-
-								//test1
-								energy1 = kineticEnergy(ball) + kineticEnergy(other);
-								if (fabs(energy0 - energy1) > 0.0001f)
-									printf("changed kinetic across projection! %f\n", energy0 - energy1);
-
-								//momentum converation
-								double newNormBall = ellasticCollision(ball->m, ball->v[0], other->m, other->v[0]);
-								double newNormOther = ellasticCollision(other->m, other->v[0], ball->m, ball->v[0]);
-
-								ball->v[0] = newNormBall;
-								other->v[0] = newNormOther;
-
-								//test2
-								energy2 = kineticEnergy(ball) + kineticEnergy(other);
-								if (fabs(energy1 - energy2) > 0.0001f)
-									printf("changed kinetic across momentum transfer! %f\n", energy1 - energy2);
-
-								//revert coordinates
-								ball->v = coord * ball->v;
-								other->v = coord * other->v;
-
-								//ball->vy  = g * (1 - t) * timeScale;
-								//other->vy = g * (1 - t) * timeScale;
-
-								//test3
-								energy3 = kineticEnergy(ball) + kineticEnergy(other);
-								if (fabs(energy2 - energy3) > 0.0001f)
-									printf("changed kinetic across reverse projection! %f\n", energy2 - energy3);
-
-								//limit new velocity
-								applyTerminalVelocity(ball);
-								applyTerminalVelocity(other);
-
-								//use velocity for new direction with remaining turn
-								ball->pos += ball->v  * (1 - t) * timeScale;
-								other->pos += other->v * (1 - t) * timeScale;
-							}
-						}
-					}
+					applyTerminalVelocity(ball);
+					applyTerminalVelocity(other);
 				}
 			}
 		} while (++iter < maxIter);
 		iter = 0;
+
+		if (drawCount++ > 5)
+		{
+			drawCount = 0;
+			box.addPoint(walls.pos);
+		}
+		box.drawTrail();
 
 		/* Draw Objects */
 		for (size_t i = 0; i < ballCount; i++)
@@ -321,7 +358,16 @@ int main(void)
 			drawArrow(ball->pos, ball->pos + 5 * ball->v, 0.75f);
 		}
 
-		netEnergy = systemEnergy(ballpit, ballCount);
+		/* Draw Walls */
+		glColor4d(1.f, 1.f, 1.f, 1.f);
+		glBegin(GL_LINE_LOOP);
+		glVertex2d(walls.pos[0] + walls.dimensions[0] / 2, walls.pos[1] + walls.dimensions[1] / 2);
+		glVertex2d(walls.pos[0] - walls.dimensions[0] / 2, walls.pos[1] + walls.dimensions[1] / 2);
+		glVertex2d(walls.pos[0] - walls.dimensions[0] / 2, walls.pos[1] - walls.dimensions[1] / 2);
+		glVertex2d(walls.pos[0] + walls.dimensions[0] / 2, walls.pos[1] - walls.dimensions[1] / 2);
+		glEnd();
+
+		netEnergy = systemEnergy(ballpit, ballCount) + 0.5f * walls.m * fabs(walls.v.dotProduct(walls.v));
 		lastEnergy = netEnergy;
 		avgEnergy = (avgEnergy * count + netEnergy) / (count + 1);
 		count++;
