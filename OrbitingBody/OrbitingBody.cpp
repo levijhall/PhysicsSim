@@ -3,66 +3,18 @@
 
 #include "pch.h"
 #include "draw.h"
+#include "camera.h"
+#include "mouse.h"
+#include "keyboard.h"
+#include "instancePool.h"
 #include <iostream>
 
 int SCREEN_WIDTH = 480;
 int SCREEN_HEIGHT = 480;
 double SCREEN_ASPECT = (double)SCREEN_WIDTH / (double)SCREEN_HEIGHT;
 
-/* Define mouse states */
-enum mouseStates
-{
-	idle,
-	move,
-	create,
-	length
-};
-
-struct Mouse
-{
-	mouseStates state = idle;
-	vec<2> pos;
-	vec<2> prev_pos;
-	double sensitivity = 0.01f;
-};
-
-double scroll = 0.f;
-
 void scrollCallback(GLFWwindow *window, double xOffset, double yOffset);
-static void cursorPositionCallback(GLFWwindow *window, double xpos, double ypos);
-void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
-void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void windowSizeCallback(GLFWwindow *window, int width, int height);
-
-struct Camera
-{
-	const double zoomMin = -12.f;
-	const double zoomMax = 12.f;
-	const double zoomPow = 1.1f;
-
-	vec<2> zoomPos{ 0.f, 0.f };
-	vec<2> movePos{ 0.f, 0.f };
-
-	double zoomMag = 1.f;
-	double zoomInt = 0;
-
-	void zoom(double increment)
-	{
-		zoomInt += increment;
-		if (zoomInt > zoomMax)
-			zoomInt = zoomMax;
-		else
-			if (zoomInt < zoomMin)
-				zoomInt = zoomMin;
-
-		zoomMag = pow(zoomPow, zoomInt);
-	}
-
-	void setZoom(double magnitude)
-	{
-		zoomMag = magnitude;
-	}
-};
 
 /*Global camera*/
 Camera cam;
@@ -70,57 +22,7 @@ Mouse mouse;
 
 bool isPaused = false;
 
-template <typename T>
-class instancePool
-{
-public:
-	unsigned count;
-	T *d;
-
-	instancePool()
-	{
-		size = 4;
-		d = (T*)malloc(size * sizeof(T));
-		count = 0;
-	}
-
-	instancePool(unsigned size)
-	{
-		d = (T*)malloc(size * sizeof(T));
-		count = 0;
-	}
-
-	~instancePool()
-	{
-		free(d);
-	}
-
-	void addInstance(T *id)
-	{
-		count++;
-		if (count == size)
-			reallocPool();
-		std::uninitialized_copy(id, id + 1, &d[count - 1]); //why?
-	}
-
-	void removeInstance(unsigned i)
-	{
-		d[i] = d[count];
-		count--;
-	}
-
-private:
-	unsigned size;
-
-	void reallocPool()
-	{
-		size *= 2;
-		d = (T*)realloc(d, size * sizeof(T));
-	}
-};
-
 int state;
-int changedState = GLFW_RELEASE;
 
 int main()
 {
@@ -128,7 +30,7 @@ int main()
 	vec<2> CoM{ 0.f, 0.f };
 	double tMass = 0.f;
 	double G = 1.f;
-	double td = 0.001f;
+	double td = 0.0001f;
 
 	unsigned looped = 0;
 	unsigned LOOP = 20;
@@ -272,15 +174,9 @@ int main()
 		}
 
 		//Keyboard inputs
-		state = glfwGetKey(window, GLFW_KEY_SPACE);
-		if (state == GLFW_PRESS && changedState == GLFW_RELEASE)
+		if (keyPressedOnce(GLFW_KEY_SPACE))
 		{
 			isPaused = !isPaused;
-			changedState = GLFW_PRESS;
-		}
-		if (changedState == GLFW_PRESS && state == GLFW_RELEASE)
-		{
-			changedState = GLFW_RELEASE;
 		}
 
 		/* Swap front and back buffers */
@@ -298,22 +194,6 @@ void scrollCallback(GLFWwindow *window, double xOffset, double yOffset)
 	{
 		cam.zoom(yOffset);
 	}
-	std::cout << "Mag: " << cam.zoomMag << std::endl;
-}
-
-static void cursorPositionCallback(GLFWwindow *window, double xpos, double ypos)
-{
-	//Do Nothing
-}
-
-void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
-{
-	//Do Nothing
-}
-
-void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
-{
-	//Do Nothing
 }
 
 void windowSizeCallback(GLFWwindow *window, int width, int height) {
