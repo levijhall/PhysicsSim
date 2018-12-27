@@ -13,10 +13,10 @@
 #include "../ParticlesInABox/laws.h"
 #include "../ParticlesInABox/collisions.h"
 
-//#include "../OrbitingBody/camera.h"
-//#include "../OrbitingBody/mouse.h"
-//#include "../OrbitingBody/instancePool.h"
-
+#include "../OrbitingBody/camera.h"
+#include "../OrbitingBody/mouse.h"
+#include "../OrbitingBody/keyboard.h"
+#include "../OrbitingBody/instancePool.h"
 
 template<unsigned dim>
 using vec = matrix<dim, 1>;
@@ -30,5 +30,7 @@ struct pointMass {
 	double r;
 	vec<3> rgb;
 };
+
+typedef pointMass object;
 
 #endif //PCH_H
