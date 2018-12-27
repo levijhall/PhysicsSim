@@ -9,7 +9,7 @@
 template<unsigned dim>
 using vec = matrix<dim, 1>;
 
-typedef struct object_s {
+struct object {
 	vec<2> pos;
 	vec<2> prev_pos;
 	vec<2> v;
@@ -17,4 +17,4 @@ typedef struct object_s {
 	double m;
 	double r;
 	vec<3> rgb;
-} object;
+};
